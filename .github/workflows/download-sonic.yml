@@ -1,0 +1,22 @@
+name: Download Sonic Image
+
+on:
+  workflow_dispatch:
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pull Sonic image
+        run: docker pull gosonic/sonic:latest
+
+      - name: Save Docker image
+        run: docker save gosonic/sonic:latest | gzip > sonic.tar.gz
+
+      - name: Upload image
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonic-image
+          path: sonic.tar.gz
+          retention-days: 1
