@@ -1,0 +1,56 @@
+name: Deploy an older Pages release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Git release tag to deploy
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: github-pages-deployment
+      cancel-in-progress: false
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Check out the exact requested tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag }}
+          fetch-depth: 0
+
+      - name: Confirm the tag points to this commit
+        env:
+          VERSION: ${{ inputs.tag }}
+        run: |
+          git show-ref --verify --quiet "refs/tags/$VERSION"
+          test "$(git rev-list -n 1 "$VERSION")" = "$(git rev-parse HEAD)"
+
+      - name: Restore the selected version on the page
+        env:
+          VERSION: ${{ inputs.tag }}
+        run: |
+          test -f part2/site/index.html
+          grep -q '__VERSION__' part2/site/index.html
+          sed -i "s/__VERSION__/${VERSION}/g" part2/site/index.html
+
+      - name: Upload the historical page
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: part2/site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+.env
+*.tar
+*.tar.gz
+Dockerfile.original
+queue.txt
+*.lock
